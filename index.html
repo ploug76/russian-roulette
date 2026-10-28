@@ -61,7 +61,7 @@ const DRINKS=[
  {n:'Swamp Water',k:'Mystery punch',g:'tall',oz:10,abv:14,c:'#6fbf3a'},
  {n:'Rocket Fuel',k:'Made-up blue shot',g:'shot',oz:1.5,abv:75,c:'#5cc8f0'},
  {n:'Grandpa\u2019s Cough Syrup',k:'Herbal liqueur',g:'rocks',oz:2,abv:35,c:'#4a2410'},
- {n:'Unicorn Tears',k:'Glitter liqueur',g:'flute',oz:3,abv:25,c:'#e7a3e8'},
+ {n:'Glimmer Goblin',k:'Glitter liqueur',g:'flute',oz:3,abv:25,c:'#e7a3e8'},
 ];
 const SNACKS=[
  {n:'Popcorn',k:'Bar snack',g:'bowl',rec:9,sn:'pop'},
@@ -419,6 +419,8 @@ function drawHUD(){const g=ctx,pb=G.buzz[0],hb=G.buzz[1];
 function itemLine(it,s){if(it.type==='snack')return it.n+' (snack, −'+it.rec+'% buzz)';return it.n+' · '+it.k+' · '+it.oz+' oz · '+it.abv+'% · +'+Math.round(gainFor(it,s))+'% buzz'}
 function topButtons(){const y=SA.t+6,x=W-SA.r-52;button('mute',x,y,46,46,muted?'🔇':'🔊','rgba(40,20,8,.85)',()=>{setMute(!muted);audio()},{px:20});
  if(G&&['turn','spin','reveal','race','result'].includes(state))button('pause',x-54,y,46,46,'⏸','rgba(40,20,8,.85)',()=>{G.paused=true},{px:20})}
+// v2: the tap that opens the Top 10 also fires a click a moment later; swallow it so the board doesn't close at once
+function showLB(){const sw=e=>{if(e.target&&e.target.closest&&e.target.closest('#palbOv')){e.stopPropagation();e.preventDefault()}};document.addEventListener('click',sw,true);setTimeout(()=>document.removeEventListener('click',sw,true),500);try{PALB.show()}catch(e){}}
 function footer(){const s='Fictional cartoon game · 21+ · Drink responsibly';const g=ctx,px=fit(g,s,16,W-SA.l-SA.r-16,'normal');txt(g,s,W/2,H-SA.b-14,px,'rgba(255,236,200,.85)','center','middle','normal')}
 /* ---------- screens ---------- */
 function scrAge(under){const g=ctx;g.fillStyle='rgba(10,4,0,.72)';g.fillRect(0,0,W,H);const w=Math.min(W-32,460),h=Math.min(H-40,under?260:330),x=(W-w)/2,y=Math.max(SA.t+10,(H-h)/2-10);panel(x,y,w,h);
@@ -435,8 +437,8 @@ function scrTitle(){const g=ctx;let sx,sy,sw,sh;
  const p3=fit(g,'The Drinking-Game Duel',18,sw-20);txt(g,'The Drinking-Game Duel',sx+sw/2,sy+sh*0.84,p3,'#fff3e0');
  let bx,by,bw;if(!L.land){bx=SA.l+16;bw=W-SA.l-SA.r-32;by=H-SA.b-36-56-12-62}else{bw=Math.min(260,W*0.27)-6;bx=W-SA.r-12-bw;by=SA.t+64}
  button('play',bx,by,bw,62,'▶  Play','#2e7d32',()=>{state='pick'},{px:26});
- if(!L.land){const w3=(bw-20)/3,y2=by+62+12;button('how',bx,y2,w3,56,'How to Play','#4e342e',()=>{howP=0;state='how'},{px:17});button('lb',bx+w3+10,y2,w3,56,'🏆 Top 10','#1f7a45',()=>{try{PALB.show()}catch(e){}},{px:17});button('music',bx+2*(w3+10),y2,w3,56,musicOn?'♪ Music: On':'♪ Music: Off','#5d4037',()=>{setMusic(!musicOn);audio()},{px:17})}
- else{let y2=by+74;for(const [id,l,c,f] of [['how','How to Play','#4e342e',()=>{howP=0;state='how'}],['lb','🏆 Top 10','#1f7a45',()=>{try{PALB.show()}catch(e){}}],['music',musicOn?'♪ Music: On':'♪ Music: Off','#5d4037',()=>{setMusic(!musicOn);audio()}]]){button(id,bx,y2,bw,52,l,c,f,{px:18});y2+=60}}
+ if(!L.land){const w3=(bw-20)/3,y2=by+62+12;button('how',bx,y2,w3,56,'How to Play','#4e342e',()=>{howP=0;state='how'},{px:17});button('lb',bx+w3+10,y2,w3,56,'🏆 Top 10','#1f7a45',()=>showLB(),{px:17});button('music',bx+2*(w3+10),y2,w3,56,musicOn?'♪ Music: On':'♪ Music: Off','#5d4037',()=>{setMusic(!musicOn);audio()},{px:17})}
+ else{let y2=by+74;for(const [id,l,c,f] of [['how','How to Play','#4e342e',()=>{howP=0;state='how'}],['lb','🏆 Top 10','#1f7a45',()=>showLB()],['music',musicOn?'♪ Music: On':'♪ Music: Off','#5d4037',()=>{setMusic(!musicOn);audio()}]]){button(id,bx,y2,bw,52,l,c,f,{px:18});y2+=60}}
  footer()}
 const HOW=[['The Spin','You vs. the House. Six covered glasses sit on a spinning table. Flick the table to spin it: a harder flick spins it farther. When it stops, the glass at YOUR arrow is yours and the one at the House\u2019s arrow is theirs. You take turns spinning.\nThe glass shapes are a clue: short shot glasses are fast but fierce, tall beers are slow but gentle, and a dome hides a bar snack.'],
  ['The Race','Lids off! Tap your glass to grab it, HOLD to chug (or tap fast to gulp), then tap the coaster to SLAM it down. The first glass slammed wins 1 point.\nA big beer takes longer to chug than a shot, but it barely buzzes you. First to '+WIN_PTS+' points wins, unless you black out first. After round '+LAST_CALL+' it\u2019s last call: most points wins.'],
@@ -448,13 +450,13 @@ function scrHow(){const g=ctx;g.fillStyle='rgba(10,4,0,.6)';g.fillRect(0,0,W,H);
  button('hn',x+30+2*bw,by,bw,54,howP<HOW.length-1?'Next ▶':'Play ▶','#2e7d32',()=>{if(howP<HOW.length-1)howP++;else state='pick'})}
 function scrPick(){const g=ctx;g.fillStyle='rgba(10,4,0,.62)';g.fillRect(0,0,W,H);const w=Math.min(W-24-SA.l-SA.r,560),x=(W-w)/2,y=SA.t+58,h=H-y-SA.b-40;panel(x,y,w,h);
  txt(g,'Pick your opponent',W/2,y+26,22,'#ffd54f');const beat=QA.unlockAll?9:LS.get('rr_beat',0),best=LS.get('rr_best',[]);
- const top=y+52,bottom=y+h-66,rh=Math.max(48,Math.min(78,(bottom-top)/5-6));
- HOUSES.forEach((hs,i)=>{const ry=top+i*(rh+6),smpLock=isSample()&&i>0,lock=!smpLock&&i>beat;const col=smpLock||lock?'#4a3b30':['#6d4c41','#6a1b9a','#1a237e','#8e2a1a','#263238'][i];
-  const b=button('h'+i,x+12,ry,w-24,rh,'',col,()=>{if(smpLock){window.__smpWant=true;return}if(lock){toast('Beat '+HOUSES[i-1].name+' first!','#ffcc80');return}newMatch(i)});
+ const top=y+52,bottom=y+h-66,two=(bottom-top)/5-6<48,rh=two?Math.max(44,Math.min(78,(bottom-top)/3-6)):Math.max(48,Math.min(78,(bottom-top)/5-6)); // v2: short landscape uses two columns so rows never reach Back
+ HOUSES.forEach((hs,i)=>{const cw=two?(w-34)/2:w-24,cx=two?x+12+(i>2?cw+10:0):x+12,ri=two?i%3:i,ry=top+ri*(rh+6),smpLock=isSample()&&i>0,lock=!smpLock&&i>beat;const col=smpLock||lock?'#4a3b30':['#6d4c41','#6a1b9a','#1a237e','#8e2a1a','#263238'][i];
+  const b=button('h'+i,cx,ry,cw,rh,'',col,()=>{if(smpLock){window.__smpWant=true;return}if(lock){toast('Beat '+HOUSES[i-1].name+' first!','#ffcc80');return}newMatch(i)});
   const one=rh<62,ty=one?ry+rh/2:ry+rh*0.33,stars='★'.repeat(i+1)+'☆'.repeat(4-i);
-  txt(g,(i+1)+'. '+hs.name,x+24,ty,fit(g,(i+1)+'. '+hs.name,19,w*0.5),'#fff','left');
-  const right=smpLock?'🔒 Full game':lock?'🔒 Locked':best[i]?'Best '+best[i]:'Tolerance '+stars;txt(g,right,x+w-24,ty,fit(g,right,17,w*0.4),smpLock||lock?'#ffcc80':'#ffe082','right');
-  if(!one)txt(g,hs.title,x+24,ry+rh*0.72,fit(g,hs.title,16,w-60,'normal'),'rgba(255,236,200,.85)','left','middle','normal')});
+  txt(g,(i+1)+'. '+hs.name,cx+12,ty,fit(g,(i+1)+'. '+hs.name,19,cw*0.5),'#fff','left');
+  const right=smpLock?'🔒 Full game':lock?'🔒 Locked':best[i]?'Best '+best[i]:(two?'':'Tolerance ')+stars;txt(g,right,cx+cw-12,ty,fit(g,right,17,cw*0.42),smpLock||lock?'#ffcc80':'#ffe082','right');
+  if(!one)txt(g,hs.title,cx+12,ry+rh*0.72,fit(g,hs.title,16,cw-36,'normal'),'rgba(255,236,200,.85)','left','middle','normal')});
  button('pb',x+12,y+h-58,w-24,50,'◀ Back','#5d4037',()=>{state='title'});footer()}
 function scrOver(){const g=ctx;const a=clamp(G.overT*2,0,1);g.fillStyle='rgba(8,3,0,'+0.7*a+')';g.fillRect(0,0,W,H);const w=Math.min(W-24-SA.l-SA.r,480),h=Math.min(H-SA.t-SA.b-60,L.land?H-SA.t-SA.b-40:440),x=(W-w)/2,y=Math.max(SA.t+56,(H-h)/2);panel(x,y,w,h);
  const t=G.win?'YOU WIN!':'THE HOUSE WINS';txt(g,t,W/2,y+30,fit(g,t,30,w-20),G.win?'#a5d6a7':'#ff8a80');
@@ -464,9 +466,9 @@ function scrOver(){const g=ctx;const a=clamp(G.overT*2,0,1);g.fillStyle='rgba(8,
  const next=G.win&&G.house<HOUSES.length-1,bw=(w-30)/2;let by=y+h-64*(L.land?2:3)-4;if(by<yy)by=yy;
  if(!L.land){button('re',x+10,by,w-20,54,'↻ Rematch '+G.H.name.split(' ')[0],'#2e7d32',()=>{newMatch(G.house)});
   button('nx',x+10,by+62,bw,54,next?'Next opponent ▶':'Opponents','#6a1b9a',()=>{if(next){if(isSample()){window.__smpWant=true;return}newMatch(G.house+1)}else{G=null;state='pick'}});
-  button('lb2',x+20+bw,by+62,bw,54,'🏆 Top 10','#1f7a45',()=>{try{PALB.show()}catch(e){}});button('tt',x+10,by+124,w-20,50,'Title','#5d4037',()=>{G=null;state='title'})}
+  button('lb2',x+20+bw,by+62,bw,54,'🏆 Top 10','#1f7a45',()=>showLB());button('tt',x+10,by+124,w-20,50,'Title','#5d4037',()=>{G=null;state='title'})}
  else{const b3=(w-40)/3;button('re',x+10,by,b3,54,'↻ Rematch','#2e7d32',()=>{newMatch(G.house)});button('nx',x+20+b3,by,b3,54,next?'Next ▶':'Opponents','#6a1b9a',()=>{if(next){if(isSample()){window.__smpWant=true;return}newMatch(G.house+1)}else{G=null;state='pick'}});
-  button('lb2',x+30+2*b3,by,b3,54,'🏆 Top 10','#1f7a45',()=>{try{PALB.show()}catch(e){}});button('tt',x+10,by+62,w-20,48,'Title','#5d4037',()=>{G=null;state='title'})}}
+  button('lb2',x+30+2*b3,by,b3,54,'🏆 Top 10','#1f7a45',()=>showLB());button('tt',x+10,by+62,w-20,48,'Title','#5d4037',()=>{G=null;state='title'})}}
 function scrPause(){const g=ctx;g.fillStyle='rgba(8,3,0,.7)';g.fillRect(0,0,W,H);const w=Math.min(W-40,360),h=250,x=(W-w)/2,y=(H-h)/2;panel(x,y,w,h);txt(g,'Paused',W/2,y+32,26,'#ffd54f');
  button('res',x+16,y+62,w-32,54,'▶ Resume','#2e7d32',()=>{G.paused=false});button('hw',x+16,y+124,w-32,50,'How to Play','#4e342e',()=>{G=null;howP=0;state='how'});button('q',x+16,y+182,w-32,50,'Quit match','#8d2a1a',()=>{G=null;state='title'})}
 /* ---------- render ---------- */
