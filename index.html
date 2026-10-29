@@ -794,4 +794,40 @@ window.PALB=api})();
 #palbTabs button{min-height:48px!important;font-size:16px!important}
 #palbList li{min-height:30px;height:auto!important;font-size:16px!important}
 </style>
+<!-- gamepad:start -->
+<script src="gamepad.js?v=2"></script>
+<script>
+try{HOW.push(['🎮 Controller','Xbox, PlayStation or Switch controllers work (USB or Bluetooth, on a computer or paired to your phone).\nYour spin: A, or flick the stick / D-pad left or right.\nThe race: A grabs your glass, HOLD A to chug, A again to slam it down.\nY: 💧 water on your turn. Pass/Drink buttons: D-pad + A.\nStart: pause. Select: sound on/off. Menus: D-pad to pick, A to select, B to go back.'])}catch(e){}
+(function(){
+var PLAY={turn:1,spin:1,race:1,result:1};
+function ov(){return !!document.querySelector('#palbOv.on,#smpLock.on')}
+function canSpin(){return G&&!G.paused&&state==='turn'&&G.spinner===0&&!G.tween&&!G.spin&&!drag}
+function spin(dir){if(!canSpin())return;playerSpin((dir||(Math.random()<.5?-1:1))*rnd(8,16))}
+var flick=0;
+GamepadSupport.init({
+ keys:{a:function(p){if(!G||G.paused)return;
+   if(state==='race'){window.dispatchEvent(new KeyboardEvent(p?'keydown':'keyup',{code:'Space',key:' ',bubbles:true,cancelable:true}));return}
+   if(!p)return;if(state==='turn')spin(0);else if(state==='result'&&G.res&&G.res.t>0.5)nextRound()},
+  x:function(p){if(p&&state==='turn')spin(0)},
+  y:function(p){if(p&&state==='turn'&&G&&!G.spin&&!G.paused)water(0)},
+  b:function(){},left:function(p){if(p)spin(-1)},right:function(p){if(p)spin(1)},up:function(){},down:function(){},
+  start:function(p){if(p&&G&&state!=='over')G.paused=!G.paused},
+  back:function(p){if(p)setMute(!muted)}},
+ noRepeat:['a','x','y','left','right','start','back'],repeat:false,
+ ignoreSel:'#dock,#mute,#inst,#ios,.tb,#dockHint',
+ menu:function(){return ov()||!G||G.paused||!PLAY[state];},
+ items:GamepadSupport.list(function(){if(ov())return [];var L=btns.filter(function(b){return !/^(pause|mute|music)$/.test(b.id)||!G});
+   L.sort(function(a,b){return (b.id==='go'||b.id==='res')-(a.id==='go'||a.id==='res')});return L;},{scale:1}),
+ isPaused:function(){return !!(G&&G.paused)},
+ pause:function(){if(G&&!G.paused&&state!=='over')G.paused=true},
+ back:function(){if(ov())return false;
+  if(G&&G.paused){G.paused=false;return true}
+  if(state==='how'){state='title';return true}
+  var b=btns.find(function(q){return q.id==='back'});if(b){b.fn();return true}
+  return true;},
+ hint:{text:'🎮 Controller: A spins · hold A to chug · Y water · Start pause',when:function(){return state==='title'&&!ov()}}
+});
+})();
+</script>
+<!-- gamepad:end -->
 </body></html>
