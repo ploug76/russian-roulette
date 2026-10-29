@@ -806,7 +806,7 @@ function spin(dir){if(!canSpin())return;playerSpin((dir||(Math.random()<.5?-1:1)
 var flick=0;
 GamepadSupport.init({
  keys:{a:function(p){if(!G||G.paused)return;
-   if(state==='race'){window.dispatchEvent(new KeyboardEvent(p?'keydown':'keyup',{code:'Space',key:' ',bubbles:true,cancelable:true}));return}
+   if(state==='race'||(!p&&keyHold)){window.dispatchEvent(new KeyboardEvent(p?'keydown':'keyup',{code:'Space',key:' ',bubbles:true,cancelable:true}));return}
    if(!p)return;if(state==='turn')spin(0);else if(state==='result'&&G.res&&G.res.t>0.5)nextRound()},
   x:function(p){if(p&&state==='turn')spin(0)},
   y:function(p){if(p&&state==='turn'&&G&&!G.spin&&!G.paused)water(0)},
